@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12-Monats-Kalender</title>
+    <link rel="stylesheet" href="kalender.css">
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <button class="header-button" id="editButton">
+                ✏️
+                <span class="button-badge" id="editBadge">0</span>
+            </button>
+        </div>
+        <div class="header-right">
+            <button class="header-button" id="burgerButton">☰</button>
+        </div>
+    </div>
+    
+    <div class="menu" id="editMenu">
+        <div class="menu-item" data-type="urlaub" data-emoji="🏖️">
+            <span>🏖️ Urlaub</span>
+            <span class="menu-item-count" data-count="urlaub">0</span>
+        </div>
+        <div class="menu-item" data-type="betrieb-zu" data-emoji="🏢">
+            <span>🏢 Betrieb zu</span>
+            <span class="menu-item-count" data-count="betrieb-zu">0</span>
+        </div>
+    </div>
+    
+    <div class="menu" id="burgerMenu">
+        <div class="menu-item">Option A</div>
+        <div class="menu-item">Option B</div>
+        <div class="menu-item">Option C</div>
+    </div>
+    
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-content">
+                <div class="sidebar-title">Markierungen</div>
+                <div class="sidebar-item" data-type="urlaub" data-emoji="🏖️">
+                    <div class="sidebar-item-label">
+                        <span>🏖️</span>
+                        <span>Urlaub</span>
+                    </div>
+                    <span class="sidebar-item-count" data-count="urlaub">0</span>
+                </div>
+                <div class="sidebar-item" data-type="betrieb-zu" data-emoji="🏢">
+                    <div class="sidebar-item-label">
+                        <span>🏢</span>
+                        <span>Betrieb zu</span>
+                    </div>
+                    <span class="sidebar-item-count" data-count="betrieb-zu">0</span>
+                </div>
+            </div>
+        </div>
+        <div class="calendar-container" id="calendarContainer"></div>
+    </div>
+
+    <script>
+        // Feiertage für Hessen 2024-2026
+        const holidays = {
+            2024: [
+                '2024-01-01', // Neujahr
+                '2024-03-29', // Karfreitag
+                '2024-04-01', // Ostermontag
+                '2024-05-01', // Tag der Arbeit
+                '2024-05-09', // Christi Himmelfahrt
+                '2024-05-20', // Pfingstmontag
+                '2024-05-30', // Fronleichnam
+                '2024-10-03', // Tag der Deutschen Einheit
+                '2024-12-25', // 1. Weihnachtsfeiertag
+                '2024-12-26'  // 2. Weihnachtsfeiertag
+            ],
+            2025: [
+                '2025-01-01', // Neujahr
+                '2025-04-18', // Karfreitag
+                '2025-04-21', // Ostermontag
+                '2025-05-01', // Tag der Arbeit
+                '2025-05-29', // Christi Himmelfahrt
+                '2025-06-09', // Pfingstmontag
+                '2025-06-19', // Fronleichnam
+                '2025-10-03', // Tag der Deutschen Einheit
+                '2025-12-25', // 1. Weihnachtsfeiertag
+                '2025-12-26'  // 2. Weihnachtsfeiertag
+            ],
+            2026: [
+                '2026-01-01', // Neujahr
+                '2026-04-03', // Karfreitag
+                '2026-04-06', // Ostermontag
+                '2026-05-01', // Tag der Arbeit
+                '2026-05-14', // Christi Himmelfahrt
+                '2026-05-25', // Pfingstmontag
+                '2026-06-04', // Fronleichnam
+                '2026-10-03', // Tag der Deutschen Einheit
+                '2026-12-25', // 1. Weihnachtsfeiertag
+                '2026-12-26'  // 2. Weihnachtsfeiertag
+            ]
+        };
+        
+        // Schulferien für Hessen
+        const schoolHolidays = [
+            // Weihnachtsferien 2024/2025
+            { start: '2024-12-23', end: '2025-01-10' },
+            // Osterferien 2025
+            { start: '2025-04-07', end: '2025-04-21' },
+            // Sommerferien 2025
+            { start: '2025-07-07', end: '2025-08-15' },
+            // Herbstferien 2025
+            { start: '2025-10-06', end: '2025-10-18' },
+            // Weihnachtsferien 2025/2026
+            { start: '2025-12-22', end: '2026-01-10' },
+            // Osterferien 2026
+            { start: '2026-03-30', end: '2026-04-10' },
+            // Sommerferien 2026
+            { start: '2026-06-29', end: '2026-08-07' },
+            // Herbstferien 2026
+            { start: '2026-10-05', end: '2026-10-17' }
+        ];
+        
+        function isSchoolHoliday(year, month, day) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const date = new Date(year, month, day);
+            
+            for (let period of schoolHolidays) {
+                const start = new Date(period.start);
+                const end = new Date(period.end);
+                if (date >= start && date <= end) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        function isHoliday(year, month, day) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            return holidays[year] && holidays[year].includes(dateStr);
+        }
+        
+        function getMonthName(month) {
+            const monthNames = [
+                'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
+            ];
+            return monthNames[month];
+        }
+
+        function getDayName(day) {
+            const dayNames = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+            return dayNames[day];
+        }
+
+        function generateCalendar(year, month) {
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            
+            // Montag = 0, Sonntag = 6
+            let startDay = firstDay.getDay() - 1;
+            if (startDay === -1) startDay = 6; // Sonntag
+            
+            let html = `<div class="month-calendar">`;
+            html += `<div class="month-title">${getMonthName(month)} ${year}</div>`;
+            html += `<table>`;
+            html += `<thead><tr>`;
+            
+            for (let i = 0; i < 7; i++) {
+                html += `<th>${getDayName(i)}</th>`;
+            }
+            
+            html += `</tr></thead><tbody>`;
+            
+            let day = 1;
+            let today = new Date();
+            let isToday = today.getMonth() === month && today.getFullYear() === year;
+            
+            // 6 Wochen maximum
+            for (let week = 0; week < 6; week++) {
+                html += `<tr>`;
+                
+                for (let weekday = 0; weekday < 7; weekday++) {
+                    if ((week === 0 && weekday < startDay) || day > daysInMonth) {
+                        html += `<td class="empty"></td>`;
+                    } else {
+                        let classes = 'day';
+                        
+                        // Schulferien (zuerst, damit andere Klassen überschreiben können)
+                        if (isSchoolHoliday(year, month, day)) {
+                            classes += ' school-holiday';
+                        }
+                        
+                        // Wochenende (Samstag = 5, Sonntag = 6)
+                        if (weekday === 5 || weekday === 6) {
+                            classes += ' weekend';
+                        }
+                        
+                        // Feiertag (überschreibt Schulferien und Wochenende)
+                        if (isHoliday(year, month, day)) {
+                            classes += ' holiday';
+                        }
+                        
+                        // Heute (höchste Priorität)
+                        if (isToday && day === today.getDate()) {
+                            classes += ' today';
+                        }
+                        
+                        html += `<td class="${classes}">${day}</td>`;
+                        day++;
+                    }
+                }
+                
+                html += `</tr>`;
+                
+                if (day > daysInMonth) break;
+            }
+            
+            html += `</tbody></table></div>`;
+            return html;
+        }
+
+        // Markierungssystem - Variablen und Funktionen zuerst definieren
+        let currentMarkerType = null;
+        let currentMarkerEmoji = null;
+        const markedDays = {}; // Speichert Markierungen: "YYYY-MM-DD" -> {type, emoji}
+        
+        // Default-Marker
+        let markerTypes = ['urlaub', 'betrieb-zu'];
+        let markerEmojis = ['🏖️', '🏢'];
+        let markerTitles = ['Urlaub', 'Betrieb zu'];
+        
+        // State in URL kodieren
+        function encodeStateToURL() {
+            const dates = Object.keys(markedDays).sort();
+            
+            let encoded = '';
+            
+            // Markierungen kodieren
+            if (dates.length > 0) {
+                let lastDate = null;
+                let consecutiveCount = 0;
+                let lastType = null;
+                
+                for (let i = 0; i < dates.length; i++) {
+                    const dateKey = dates[i];
+                    const type = markedDays[dateKey].type;
+                    const typeIndex = markerTypes.indexOf(type);
+                    const currentDate = new Date(dateKey);
+                    
+                    if (lastDate === null) {
+                        // Erstes Datum - absolut
+                        encoded = dateKey.replace(/-/g, '') + ':' + typeIndex;
+                        lastDate = currentDate;
+                        lastType = typeIndex;
+                        consecutiveCount = 1;
+                    } else {
+                        const daysDiff = Math.round((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+                        
+                        if (daysDiff === 1 && typeIndex === lastType) {
+                            // Aufeinanderfolgend, gleicher Typ
+                            consecutiveCount++;
+                        } else {
+                            // Vorherige Sequenz abschließen
+                            if (consecutiveCount > 1) {
+                                encoded += '*' + consecutiveCount;
+                            }
+                            // Neue Markierung
+                            encoded += ',' + daysDiff + ':' + typeIndex;
+                            consecutiveCount = 1;
+                            lastType = typeIndex;
+                        }
+                        lastDate = currentDate;
+                    }
+                }
+                
+                // Letzte Sequenz abschließen
+                if (consecutiveCount > 1) {
+                    encoded += '*' + consecutiveCount;
+                }
+            }
+            
+            // Marker-Definitionen kodieren
+            let markerDefs = [];
+            for (let i = 0; i < markerEmojis.length; i++) {
+                markerDefs.push(encodeURIComponent(markerEmojis[i]) + ':' + encodeURIComponent(markerTitles[i]));
+            }
+            
+            if (markerDefs.length > 0) {
+                if (encoded) {
+                    encoded += '|' + markerDefs.join(',');
+                } else {
+                    encoded = '|' + markerDefs.join(',');
+                }
+            }
+            
+            if (encoded) {
+                window.history.replaceState(null, '', '#' + encoded);
+            } else {
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+        }
+
+        function generateYearCalendar() {
+            const container = document.getElementById('calendarContainer');
+            const today = new Date();
+            let currentYear = today.getFullYear();
+            let currentMonth = today.getMonth();
+            
+            let html = '';
+            
+            for (let i = 0; i < 12; i++) {
+                html += generateCalendar(currentYear, currentMonth);
+                
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+            }
+            
+            container.innerHTML = html;
+        }
+
+        generateYearCalendar();
+        
+        // State aus URL laden
+        decodeStateFromURL();
+        renderMarkers();
+        
+        // Zähler aktualisieren
+        function updateCounters() {
+            const counts = {};
+            
+            // Zähle alle Markierungen nach Typ
+            for (let dateKey in markedDays) {
+                const type = markedDays[dateKey].type;
+                counts[type] = (counts[type] || 0) + 1;
+            }
+            
+            // Aktualisiere Menü-Item-Zähler
+            document.querySelectorAll('.menu-item-count').forEach(counter => {
+                const type = counter.getAttribute('data-count');
+                const count = counts[type] || 0;
+                counter.textContent = count;
+                counter.style.display = count > 0 ? 'inline-block' : 'none';
+            });
+            
+            // Aktualisiere Sidebar-Item-Zähler
+            document.querySelectorAll('.sidebar-item-count').forEach(counter => {
+                const type = counter.getAttribute('data-count');
+                const count = counts[type] || 0;
+                counter.textContent = count;
+                counter.style.display = count > 0 ? 'inline-block' : 'none';
+            });
+            
+            // Aktualisiere Button-Badge
+            const editBadge = document.getElementById('editBadge');
+            if (currentMarkerType) {
+                const currentCount = counts[currentMarkerType] || 0;
+                editBadge.textContent = currentCount;
+                if (currentCount > 0) {
+                    editBadge.classList.add('active');
+                } else {
+                    editBadge.classList.remove('active');
+                }
+            } else {
+                editBadge.classList.remove('active');
+            }
+        }
+        
+        // State in URL kodieren
+        function encodeStateToURL() {
+            const dates = Object.keys(markedDays).sort();
+            if (dates.length === 0) {
+                window.history.replaceState(null, '', window.location.pathname);
+                return;
+            }
+            
+            let encoded = '';
+            let lastDate = null;
+            let consecutiveCount = 0;
+            let lastType = null;
+            
+            for (let i = 0; i < dates.length; i++) {
+                const dateKey = dates[i];
+                const type = markedDays[dateKey].type;
+                const typeIndex = markerTypes.indexOf(type);
+                const currentDate = new Date(dateKey);
+                
+                if (lastDate === null) {
+                    // Erstes Datum - absolut
+                    encoded = dateKey.replace(/-/g, '') + ':' + typeIndex;
+                    lastDate = currentDate;
+                    lastType = typeIndex;
+                    consecutiveCount = 1;
+                } else {
+                    const daysDiff = Math.round((currentDate - lastDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (daysDiff === 1 && typeIndex === lastType) {
+                        // Aufeinanderfolgend, gleicher Typ
+                        consecutiveCount++;
+                    } else {
+                        // Vorherige Sequenz abschließen
+                        if (consecutiveCount > 1) {
+                            encoded += '*' + consecutiveCount;
+                        }
+                        // Neue Markierung
+                        encoded += ',' + daysDiff + ':' + typeIndex;
+                        consecutiveCount = 1;
+                        lastType = typeIndex;
+                    }
+                    lastDate = currentDate;
+                }
+            }
+            
+            // Letzte Sequenz abschließen
+            if (consecutiveCount > 1) {
+                encoded += '*' + consecutiveCount;
+            }
+            
+            window.history.replaceState(null, '', '#' + encoded);
+        }
+        
+        // State aus URL dekodieren
+        function decodeStateFromURL() {
+            const hash = window.location.hash.substring(1);
+            if (!hash) return;
+            
+            // Trenne Markierungen und Marker-Definitionen
+            const [markingsStr, markersStr] = hash.split('|');
+            
+            // Marker-Definitionen dekodieren (falls vorhanden)
+            if (markersStr) {
+                markerTypes = [];
+                markerEmojis = [];
+                markerTitles = [];
+                
+                const markerDefs = markersStr.split(',');
+                for (let def of markerDefs) {
+                    const [emoji, title] = def.split(':');
+                    const decodedEmoji = decodeURIComponent(emoji);
+                    const decodedTitle = decodeURIComponent(title);
+                    markerEmojis.push(decodedEmoji);
+                    markerTitles.push(decodedTitle);
+                    // Type ist der Index
+                    markerTypes.push('marker-' + markerTypes.length);
+                }
+                
+                // UI aktualisieren
+                updateMarkerUI();
+            }
+            
+            // Markierungen dekodieren (falls vorhanden)
+            if (!markingsStr) return;
+            
+            const parts = markingsStr.split(',');
+            let currentDate = null;
+            
+            for (let part of parts) {
+                const [offsetStr, typeAndCount] = part.split(':');
+                const hasCount = typeAndCount.includes('*');
+                const [typeStr, countStr] = hasCount ? typeAndCount.split('*') : [typeAndCount, '1'];
+                const typeIndex = parseInt(typeStr);
+                const count = parseInt(countStr);
+                
+                if (currentDate === null) {
+                    // Erstes Datum ist absolut (YYYYMMDD)
+                    const year = offsetStr.substring(0, 4);
+                    const month = offsetStr.substring(4, 6);
+                    const day = offsetStr.substring(6, 8);
+                    currentDate = new Date(year, month - 1, day);
+                } else {
+                    // Relative Tage
+                    const offset = parseInt(offsetStr);
+                    currentDate = new Date(currentDate);
+                    currentDate.setDate(currentDate.getDate() + offset);
+                }
+                
+                // Markierungen hinzufügen
+                for (let i = 0; i < count; i++) {
+                    // Verwende lokales Datum statt ISO
+                    const year = currentDate.getFullYear();
+                    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+                    const day = String(currentDate.getDate()).padStart(2, '0');
+                    const dateKey = `${year}-${month}-${day}`;
+                    
+                    markedDays[dateKey] = {
+                        type: markerTypes[typeIndex],
+                        emoji: markerEmojis[typeIndex]
+                    };
+                    
+                    if (i < count - 1) {
+                        currentDate = new Date(currentDate);
+                        currentDate.setDate(currentDate.getDate() + 1);
+                    }
+                }
+            }
+        }
+        
+        // UI für Marker aktualisieren
+        function updateMarkerUI() {
+            // Mobile Menü
+            const editMenu = document.getElementById('editMenu');
+            editMenu.innerHTML = '';
+            for (let i = 0; i < markerEmojis.length; i++) {
+                const item = document.createElement('div');
+                item.className = 'menu-item';
+                item.setAttribute('data-type', markerTypes[i]);
+                item.setAttribute('data-emoji', markerEmojis[i]);
+                item.setAttribute('data-index', i);
+                item.innerHTML = `
+                    <div class="menu-item-label">
+                        <span>${markerEmojis[i]} ${markerTitles[i]}</span>
+                        <button class="marker-edit-btn" onclick="editMarker(${i}, 'menu'); event.stopPropagation();">✏️</button>
+                    </div>
+                    <span class="menu-item-count" data-count="${markerTypes[i]}">0</span>
+                `;
+                editMenu.appendChild(item);
+            }
+            
+            // Sidebar
+            const sidebarContent = document.querySelector('.sidebar-content');
+            if (sidebarContent) {
+                // Finde alle sidebar-items
+                const itemsContainer = sidebarContent.querySelectorAll('.sidebar-item');
+                itemsContainer.forEach(item => item.remove());
+                
+                for (let i = 0; i < markerEmojis.length; i++) {
+                    const item = document.createElement('div');
+                    item.className = 'sidebar-item';
+                    item.setAttribute('data-type', markerTypes[i]);
+                    item.setAttribute('data-emoji', markerEmojis[i]);
+                    item.setAttribute('data-index', i);
+                    item.innerHTML = `
+                        <div class="sidebar-item-label">
+                            <span>${markerEmojis[i]}</span>
+                            <span>${markerTitles[i]}</span>
+                            <button class="marker-edit-btn" onclick="editMarker(${i}, 'sidebar'); event.stopPropagation();">✏️</button>
+                        </div>
+                        <span class="sidebar-item-count" data-count="${markerTypes[i]}">0</span>
+                    `;
+                    sidebarContent.appendChild(item);
+                }
+            }
+            
+            // Event-Handler neu binden
+            bindMarkerSelectionEvents();
+        }
+        
+        // Markierungen im DOM anzeigen
+        function renderMarkers() {
+            document.querySelectorAll('.day-marker').forEach(m => m.remove());
+            
+            for (let dateKey in markedDays) {
+                const marker = markedDays[dateKey];
+                const [year, month, day] = dateKey.split('-');
+                
+                // Finde die entsprechende Zelle
+                document.querySelectorAll('.month-calendar').forEach(monthCal => {
+                    const title = monthCal.querySelector('.month-title').textContent;
+                    const [monthName, titleYear] = title.split(' ');
+                    const monthIndex = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                                       'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'].indexOf(monthName);
+                    
+                    if (parseInt(titleYear) === parseInt(year) && monthIndex === parseInt(month) - 1) {
+                        const cells = monthCal.querySelectorAll('td.day');
+                        cells.forEach(cell => {
+                            if (parseInt(cell.textContent) === parseInt(day)) {
+                                const markerEl = document.createElement('span');
+                                markerEl.className = 'day-marker';
+                                markerEl.textContent = marker.emoji;
+                                cell.appendChild(markerEl);
+                            }
+                        });
+                    }
+                });
+            }
+        }
+        
+        // Event-Handler für Marker-Auswahl binden
+        function bindMarkerSelectionEvents() {
+            // Markierungstyp auswählen (Mobil)
+            document.querySelectorAll('#editMenu .menu-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    currentMarkerType = this.getAttribute('data-type');
+                    currentMarkerEmoji = this.getAttribute('data-emoji');
+                    editButton.innerHTML = currentMarkerEmoji + '<span class="button-badge" id="editBadge">0</span>';
+                    editMenu.classList.remove('active');
+                    updateCounters();
+                });
+            });
+            
+            // Sidebar-Items für Desktop
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    // Entferne active von allen
+                    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+                    // Setze active auf aktuelles Item
+                    this.classList.add('active');
+                    
+                    currentMarkerType = this.getAttribute('data-type');
+                    currentMarkerEmoji = this.getAttribute('data-emoji');
+                    updateCounters();
+                });
+            });
+        }
+        
+        // Menü-Funktionalität
+        const editButton = document.getElementById('editButton');
+        const burgerButton = document.getElementById('burgerButton');
+        const editMenu = document.getElementById('editMenu');
+        const burgerMenu = document.getElementById('burgerMenu');
+        
+        editButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            editMenu.classList.toggle('active');
+            burgerMenu.classList.remove('active');
+        });
+        
+        burgerButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            burgerMenu.classList.toggle('active');
+            editMenu.classList.remove('active');
+        });
+        
+        // Initiale Event-Handler binden
+        bindMarkerSelectionEvents();
+        
+        // Tage markieren/entmarkieren
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('day') && currentMarkerType) {
+                const td = e.target;
+                const dayNumber = parseInt(td.textContent);
+                
+                // Finde Jahr und Monat aus dem DOM
+                let monthCalendar = td.closest('.month-calendar');
+                let monthTitle = monthCalendar.querySelector('.month-title').textContent;
+                let [monthName, year] = monthTitle.split(' ');
+                let month = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                            'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'].indexOf(monthName);
+                
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
+                
+                // Toggle Markierung
+                if (markedDays[dateKey]) {
+                    // Entfernen
+                    delete markedDays[dateKey];
+                    let marker = td.querySelector('.day-marker');
+                    if (marker) marker.remove();
+                } else {
+                    // Hinzufügen
+                    markedDays[dateKey] = {
+                        type: currentMarkerType,
+                        emoji: currentMarkerEmoji
+                    };
+                    
+                    // Emoji hinzufügen
+                    let marker = document.createElement('span');
+                    marker.className = 'day-marker';
+                    marker.textContent = currentMarkerEmoji;
+                    td.appendChild(marker);
+                }
+                
+                updateCounters();
+                encodeStateToURL();
+                e.stopPropagation();
+            }
+        });
+        
+        // Menüs schließen beim Klick außerhalb
+        document.addEventListener('click', function() {
+            editMenu.classList.remove('active');
+            burgerMenu.classList.remove('active');
+        });
+        
+        // Menüs nicht schließen beim Klick auf das Menü selbst
+        editMenu.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        burgerMenu.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // Initiale Zähler-Anzeige
+        updateCounters();
+        
+        // Globale Funktionen für Marker-Bearbeitung
+        window.editMarker = function(index, context) {
+            const currentEmoji = markerEmojis[index];
+            const currentTitle = markerTitles[index];
+            const defaultValue = `${currentEmoji} ${currentTitle}`;
+            
+            let container;
+            if (context === 'menu') {
+                const menuItem = document.querySelector(`#editMenu .menu-item[data-index="${index}"]`);
+                const label = menuItem.querySelector('.menu-item-label') || menuItem.querySelector('span');
+                container = label;
+            } else {
+                const sidebarItem = document.querySelector(`.sidebar-item[data-index="${index}"]`);
+                const label = sidebarItem.querySelector('.sidebar-item-label');
+                container = label;
+            }
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'marker-edit-input';
+            input.value = defaultValue;
+            
+            const saveEdit = () => {
+                const value = input.value.trim();
+                let newEmoji = '📌';
+                let newTitle = value;
+                
+                if (value.length > 0) {
+                    const firstChar = Array.from(value)[0];
+                    const codePoint = firstChar.codePointAt(0);
+                    const isEm = (codePoint >= 0x1F600 && codePoint <= 0x1F64F) ||
+                                 (codePoint >= 0x1F300 && codePoint <= 0x1F5FF) ||
+                                 (codePoint >= 0x1F680 && codePoint <= 0x1F6FF) ||
+                                 (codePoint >= 0x2600 && codePoint <= 0x26FF) ||
+                                 (codePoint >= 0x1F900 && codePoint <= 0x1F9FF);
+                    
+                    if (isEm) {
+                        newEmoji = firstChar;
+                        newTitle = value.substring(firstChar.length).trim();
+                    }
+                }
+                
+                if (!newTitle) newTitle = 'Marker ' + (index + 1);
+                
+                markerEmojis[index] = newEmoji;
+                markerTitles[index] = newTitle;
+                
+                for (let dateKey in markedDays) {
+                    if (markedDays[dateKey].type === markerTypes[index]) {
+                        markedDays[dateKey].emoji = newEmoji;
+                    }
+                }
+                
+                updateMarkerUI();
+                renderMarkers();
+                updateCounters();
+                encodeStateToURL();
+            };
+            
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') saveEdit();
+                else if (e.key === 'Escape') updateMarkerUI();
+            });
+            
+            container.innerHTML = '';
+            container.appendChild(input);
+            input.focus();
+            input.select();
+        };
+    </script>
+</body>
+</html>

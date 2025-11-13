@@ -1,0 +1,377 @@
+body {
+    font-family: Arial, sans-serif;
+    padding: 0;
+    margin: 0;
+    background-color: #f5f5f5;
+}
+
+.main-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+}
+
+.sidebar {
+    display: none;
+}
+
+.calendar-container {
+    flex: 1;
+}
+
+@media (min-width: 769px) {
+    #editButton {
+        display: none;
+    }
+    
+    .sidebar {
+        display: block;
+        width: 250px;
+        position: sticky;
+        top: 20px;
+        height: fit-content;
+    }
+    
+    .sidebar-content {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 20px;
+    }
+    
+    .sidebar-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #2196F3;
+    }
+    
+    .sidebar-item {
+        padding: 12px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        border-radius: 6px;
+        border: 2px solid #e0e0e0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.2s;
+    }
+    
+    .sidebar-item:hover {
+        background-color: #f5f5f5;
+        border-color: #2196F3;
+    }
+    
+    .sidebar-item.active {
+        background-color: #e3f2fd;
+        border-color: #2196F3;
+    }
+    
+    .sidebar-item-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .sidebar-item-count {
+        background-color: #2196F3;
+        color: white;
+        border-radius: 12px;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: bold;
+    }
+    
+    .calendar-container {
+        flex: 2;
+    }
+}
+
+.marker-edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 14px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.marker-edit-btn:hover {
+    opacity: 1;
+}
+
+.marker-edit-input {
+    border: 2px solid #2196F3;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.menu-item-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+}
+
+.header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: #2196F3;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    z-index: 1000;
+}
+
+.header-left {
+    flex: 1;
+}
+
+.header-right {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.header-button {
+    background-color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.header-button:hover {
+    background-color: #f0f0f0;
+}
+
+.button-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #f44336;
+    color: white;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    display: none;
+}
+
+.button-badge.active {
+    display: flex;
+}
+
+.menu {
+    position: fixed;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    padding: 10px 0;
+    min-width: 200px;
+    display: none;
+    z-index: 1001;
+}
+
+.menu.active {
+    display: block;
+}
+
+.menu-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.menu-item:last-child {
+    border-bottom: none;
+}
+
+.menu-item:hover {
+    background-color: #f5f5f5;
+}
+
+.menu-item-count {
+    background-color: #2196F3;
+    color: white;
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+
+#editMenu {
+    left: 20px;
+    top: 70px;
+}
+
+#burgerMenu {
+    right: 20px;
+    top: 70px;
+}
+
+.month-calendar {
+    background: white;
+    padding: 20px;
+    margin-bottom: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.month-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+}
+
+td {
+    border: 1px solid #ddd;
+    padding: 15px;
+    text-align: center;
+    height: 60px;
+    vertical-align: top;
+}
+
+td.empty {
+    background-color: #f9f9f9;
+}
+
+td.day {
+    background-color: white;
+    cursor: pointer;
+    position: relative;
+}
+
+td.day:hover {
+    background-color: #e8f5e9;
+}
+
+td.weekend {
+    background-color: #e3f2fd;
+}
+
+td.holiday {
+    background-color: #ffeb3b;
+    font-weight: bold;
+}
+
+td.school-holiday {
+    position: relative;
+}
+
+td.school-holiday::after {
+    content: 'Ferien';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #fff59d;
+    font-size: 9px;
+    padding: 2px;
+    text-align: center;
+    border-top: 1px solid #fdd835;
+}
+
+.day-marker {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 16px;
+    line-height: 1;
+}
+
+td.today {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        padding: 5px;
+    }
+    
+    .header {
+        padding: 0 10px;
+    }
+    
+    .header-button {
+        padding: 8px 12px;
+        font-size: 18px;
+    }
+    
+    #editMenu {
+        left: 10px;
+    }
+    
+    #burgerMenu {
+        right: 10px;
+    }
+    
+    .month-calendar {
+        padding: 8px;
+        margin-bottom: 15px;
+    }
+    
+    .month-title {
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+    
+    table {
+        width: 100%;
+        table-layout: fixed;
+    }
+    
+    th {
+        padding: 4px 2px;
+        font-size: 10px;
+    }
+    
+    td {
+        padding: 4px 2px;
+        font-size: 12px;
+        height: 35px;
+    }
+    
+    td.school-holiday::after {
+        font-size: 7px;
+        padding: 1px;
+    }
+}
